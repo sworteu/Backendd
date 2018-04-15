@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<title>System Tokens Demo</title>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width">
+		<link rel="stylesheet" type="text/css" href="/stylesheet.css">
+	</head>
+
+	<body>
+
+		<h1>System Tokens Demo</h1>	
+		
+		<p>
+		Date: {{system.date.longdate}}
+		</p>
+		
+		<p>
+		Time: {{system.date.longtime}}
+		</p>		
+		
+		<p>
+		Your IP Address: {{system.request.remoteaddress}}
+		</p>			
+		
+		<p>
+		Your User Agent: {{system.request.headers.User-Agent}}
+		</p>			
+				
+		<p>
+		URL Parameters: {{system.request.urlparams}}
+		</p>	
+		
+		<p>
+		GET.id: {{system.request.get.id}}
+		</p>	
+		
+		<p>
+		GET.name: {{system.request.get.name}}
+		</p>	
+		
+		<p>
+		Made with Xojo {{system.meta.xojo-version}} &amp; Aloe {{system.meta.aloe-version}}.
+		</p>							
+		
+		<p>
+		<a href="/template-system.html">Show Tokens</a>
+		</p>			
+		
+	</body>
+	
+</html>
