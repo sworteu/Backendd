@@ -1,61 +1,56 @@
 #tag Class
 Protected Class App
-Inherits Backendd.BackenddApplication
+Inherits Backendd.BackendApp
+	#tag Event , Description = 43616C6C6564207768656E20746865206170706C69636174696F6E2069732061626F757420746F20636C6F73652E205468697320697320746865206C617374206576656E7420746861742077696C6C206265207261697365642E
+		Function Finished() As Integer
+		  // Last called event just before close.
+		  // Return 0 if it's a successful close, on error return errorcode
+		  
+		End Function
+	#tag EndEvent
+
+	#tag Event
+		Sub Open(Args As Backendd.Arguments, Server As Backendd.Server)
+		  // The program open event, will fire only once.
+		End Sub
+	#tag EndEvent
+
+	#tag Event , Description = 5468697320697320746865206D61696E206C6F6F702E
+		Sub Running()
+		  // The main event loop change the processing speed using 
+		  // App.MillisecondsSleep = 10 - default 10 (0 = maximum speed !100% CPU, 1000 for every +- 1 sec loop)
+		  
+		End Sub
+	#tag EndEvent
+
+	#tag Event
+		Function UnhandledException(error As RuntimeException) As Boolean
+		  
+		End Function
+	#tag EndEvent
+
+
 	#tag Method, Flags = &h0
 		Sub RequestHandler(Request As Backendd.Request)
-		  // Uncomment the demo that you'd like to run...
-		  
-		  // Demo 1
-		  // A simple "Hello, World" example.
-		  'Demo1.RequestProcess(Request)
-		  
-		  // Demo 2
-		  // Maps requests to static files in a directory.
-		  // Includes custom 404 handling , request logging, cache-control header.
-		  'Demo2.RequestProcess(Request)
-		  
-		  // Demo 3
-		  // Web-publishes data in a SQLite database.
-		  // Also demonstrates caching.
-		  'Demo3.RequestProcess(Request)
-		  
-		  // Demo 4
-		  // Demonstrates GET and POST params, headers, session management, etc.
-		  Demo4.RequestProcess(Request)
-		  
-		  // Demo 5
-		  // Simple example of a JSON response.
-		  'Demo5.RequestProcess(Request)
-		  
-		  // Demo 6
-		  // Simple examples of setting and getting cookies.
-		  'Demo6.RequestProcess(Request)
-		  
-		  // Demo 7
-		  // A simple Web service that returns the current date/time.
-		  'Demo7.RequestProcess(Request)
-		  
-		  // Demo 8
-		  // Demonstrates multi-threading support.
-		  'Demo8.RequestProcess(Request)
-		  
-		  // Demo 9
-		  // Demonstrates processing requests when the app is running multiple AE server instances.
-		  // Note: See App.Run for additional configuration info ("Multi-Server Demo"). 
-		  'Demo9.RequestProcess(Request)
-		  
-		  // Demo 10
-		  // Demonstrates template support.
-		  'Demo10.RequestProcess(Request)
-		  
-		  
-		  
+		  // handle the request here...
 		  
 		End Sub
 	#tag EndMethod
 
 
 	#tag ViewBehavior
+		#tag ViewProperty
+			Name="MillisecondsSleep"
+			Group="Behavior"
+			InitialValue="10"
+			Type="Integer"
+		#tag EndViewProperty
+		#tag ViewProperty
+			Name="Close"
+			Group="Behavior"
+			InitialValue="False"
+			Type="Boolean"
+		#tag EndViewProperty
 	#tag EndViewBehavior
 End Class
 #tag EndClass

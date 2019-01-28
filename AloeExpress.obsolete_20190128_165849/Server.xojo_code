@@ -288,7 +288,7 @@ Inherits ServerSocket
 	#tag EndProperty
 
 	#tag Property, Flags = &h0
-		WebSockets() As Backendd.Request
+		WebSockets As Backendd.Request
 	#tag EndProperty
 
 	#tag Property, Flags = &h0

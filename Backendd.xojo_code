@@ -1,11 +1,11 @@
 #tag Module
 Protected Module Backendd
 	#tag Method, Flags = &h0
-		Function ArgsToDictionary(Args() As String) As Xojo.Core.Dictionary
+		Function ArgsToDictionary(Args() As String) As Dictionary
 		  // Converts command line arguments to a dictionary.
 		  
 		  
-		  Dim Arguments As New Xojo.Core.Dictionary
+		  Dim Arguments As New Dictionary
 		  
 		  For Each Argument As String In Args
 		    
@@ -22,18 +22,63 @@ Protected Module Backendd
 	#tag EndMethod
 
 	#tag Method, Flags = &h0
-		Function DateToRFC1123(dt As Xojo.Core.Date) As Text
-		  // Returns a Xojo.Core.Date in RFC 822 / 1123 format.
+		Function BlockGet(Source As String, TokenBegin As String, TokenEnd As String, Start As Integer = 0) As String
+		  
+		  
+		  Dim Content As String
+		  
+		  // Get the start position of the beginning token.
+		  Dim StartPosition As Integer = Source.InStr(Start, TokenBegin) 
+		  
+		  // Get the position of the ending token.
+		  Dim StopPosition As Integer = Source.InStr(StartPosition, TokenEnd)
+		  
+		  // If the template includes both the beginning and ending tokens...
+		  If ( (StartPosition > 0) and (StopPosition > 0) ) Then
+		    
+		    // Get the content between the tokens.
+		    Content = Mid(Source, StartPosition + TokenBegin.Len, StopPosition - StartPosition - TokenBegin.Len)
+		    
+		  End If
+		  
+		  Return Content
+		End Function
+	#tag EndMethod
+
+	#tag Method, Flags = &h0
+		Function BlockReplace(Source As String, TokenBegin As String, TokenEnd As String, Start As Integer = 0, ReplacementContent As String = "") As String
+		  // Get the content block.
+		  Dim BlockContent As String = BlockGet(Source, TokenBegin, TokenEnd, Start)
+		  
+		  // Replace the content.
+		  Source = Source.ReplaceAll(TokenBegin + BlockContent + TokenEnd, ReplacementContent)
+		  
+		  Return Source
+		End Function
+	#tag EndMethod
+
+	#tag Method, Flags = &h0
+		Function BooleanToString(Bool As Boolean) As String
+		  Return If(Bool, "true", "false")
+		End Function
+	#tag EndMethod
+
+	#tag Method, Flags = &h0
+		Function DateToRFC1123(TheDate As Date = Nil) As Text
+		  // Returns a  in RFC 822 / 1123 format.
 		  // Example: Mon, 27 Nov 2017 13:27:26 GMT
 		  // Special thanks to Norman Palardy.
 		  // See: https://forum.xojo.com/42908-current-date-time-stamp-in-rfc-822-1123-format
 		  
 		  Dim tmp As Text
 		  
-		  // clone the date since we do not want to alter it
-		  Dim tmpDt As Xojo.Core.Date = New Xojo.Core.Date(dt.SecondsFrom1970, New Xojo.Core.TimeZone(0))
+		  If TheDate = Nil Then
+		    TheDate = New Date
+		  End If
 		  
-		  Select Case tmpDt.DayOfWeek
+		  TheDate.GMTOffset = 0
+		  
+		  Select Case TheDate.DayOfWeek
 		  Case 1
 		    tmp = tmp + "Sun"
 		  Case 2
@@ -52,10 +97,11 @@ Protected Module Backendd
 		  
 		  tmp = tmp + ", "
 		  
-		  tmp = tmp + tmpDt.Day.ToText(Xojo.Core.Locale.Raw, "#0")
+		  tmp = tmp + If(TheDate.Day < 10, "0", "") + TheDate.Day.ToText
+		  
 		  tmp = tmp + " "
 		  
-		  Select Case tmpdt.Month
+		  Select Case TheDate.Month
 		  Case 1
 		    tmp = tmp + "Jan" 
 		  Case 2
@@ -84,16 +130,16 @@ Protected Module Backendd
 		  
 		  tmp = tmp + " "
 		  
-		  tmp = tmp + tmpDt.Year.ToText(Xojo.Core.Locale.Raw, "####")
+		  tmp = tmp + TheDate.Year.ToText
 		  tmp = tmp + " "
 		  
-		  tmp = tmp + tmpDt.Hour.ToText(Xojo.Core.Locale.Raw, "00")
+		  tmp = tmp + If(TheDate.Hour < 10, "0", "") + TheDate.Hour.ToText
 		  tmp = tmp + ":"
 		  
-		  tmp = tmp + tmpDt.Minute.ToText(Xojo.Core.Locale.Raw, "00")
+		  tmp = tmp + If(TheDate.Minute < 10, "0", "") + TheDate.Minute.ToText
 		  tmp = tmp + ":"
 		  
-		  tmp = tmp + tmpDt.Second.ToText(Xojo.Core.Locale.Raw, "00")
+		  tmp = tmp + If(TheDate.Second < 10, "0", "") + TheDate.Second.ToText
 		  tmp = tmp + " "
 		  
 		  tmp = tmp + "GMT"
@@ -104,7 +150,29 @@ Protected Module Backendd
 	#tag EndMethod
 
 	#tag Method, Flags = &h0
-		Function FileRead(FI as FolderItem) As String
+		Function DictionaryToJSONItem(DictionaryIn As Dictionary) As JSONItem
+		  // Converts a standard Xojo dictionary to a JSONItem.
+		  
+		  Dim J As JSONItem
+		  J = DictionaryIn
+		  Return J
+		  
+		End Function
+	#tag EndMethod
+
+	#tag Method, Flags = &h0
+		Function DictionaryToJSONString(DictionaryIn As Dictionary) As String
+		  // Converts a standard Xojo dictionary to a JSON string.
+		  
+		  Dim J As JSONItem
+		  J = DictionaryIn
+		  Return J.ToString
+		  
+		End Function
+	#tag EndMethod
+
+	#tag Method, Flags = &h0
+		Function FileRead(FI as FolderItem, Encoding as TextEncoding = Nil) As String
 		  // Reads and returns the contents of a file, given a FolderItem.
 		  
 		  
@@ -116,7 +184,7 @@ Protected Module Backendd
 		      
 		      Try
 		        TIS = TextInputStream.Open(FI)
-		        TIS.Encoding = Encodings.UTF8
+		        TIS.Encoding = If(Encoding = Nil, Encodings.UTF8, Encoding)
 		        Return TIS.ReadAll
 		      Catch e As IOException
 		        Return ""
@@ -148,6 +216,14 @@ Protected Module Backendd
 		  // Return the compressed string.
 		  Dim GzipContent As New _GzipString
 		  Return GzipContent.Compress(Uncompressed)
+		End Function
+	#tag EndMethod
+
+	#tag Method, Flags = &h0
+		Function JSONStringToJSONItem(JSONString As String) As JSONItem
+		  // Converts a JSON string to a JSON object (JSONItem).
+		  
+		  Return New JSONItem(JSONString)
 		End Function
 	#tag EndMethod
 
@@ -764,6 +840,100 @@ Protected Module Backendd
 	#tag EndMethod
 
 	#tag Method, Flags = &h0
+		Function PrimitiveToString(Value As Variant) As String
+		  // Converts the value of a primitive datatype (boolean, number, string, etc) to a string.
+		  
+		  
+		  // If the value is nil...
+		  If Value = Nil Then
+		    Return ""
+		  End If
+		  
+		  // Use introspection to determine the entry's value type.
+		  Dim ValueType As Xojo.Introspection.TypeInfo = Xojo.Introspection.GetType(Value)
+		  
+		  // If the value is not a primitive...
+		  If ValueType.IsPrimitive = False Then
+		    Return ""
+		  End If
+		  
+		  // Convert the primitive value to a string.
+		  Dim ValueString As String
+		  If ValueType.Name = "Int32" Then
+		    Dim ValueInteger As Integer = Value
+		    ValueString = ValueInteger.ToText
+		  ElseIf ValueType.Name = "Int64" Then
+		    Dim ValueInteger As Integer = Value
+		    ValueString = ValueInteger.ToText
+		  ElseIf ValueType.Name = "Double" Then
+		    Dim ValueDouble As Double = Value
+		    ValueString = ValueDouble.ToText
+		  ElseIf ValueType.Name = "String" Then
+		    ValueString = Value
+		  ElseIf ValueType.Name = "Text" Then
+		    Dim ValueText As Text = Value
+		    ValueString = ValueText
+		  ElseIf ValueType.Name = "Boolean" Then
+		    Dim ValueBoolean As Boolean = Value
+		    ValueString = If(ValueBoolean, "True", "False")
+		  Else
+		    Return ""
+		  End If
+		  
+		  Return ValueString
+		End Function
+	#tag EndMethod
+
+	#tag Method, Flags = &h0
+		Function RecordSetToJSONItem(Records As RecordSet, Close As Boolean=True) As JSONItem
+		  // Converts a recordset to JSONItem.
+		  
+		  
+		  Dim RecordsJSON As New JSONItem
+		  
+		  // Loop over each record...
+		  While Not Records.EOF
+		    
+		    Dim RecordJSON As New JSONItem
+		    
+		    // Loop over each column...
+		    For i As Integer = 0 To Records.FieldCount-1
+		      
+		      // Add a name / value pair to the JSON record.
+		      RecordJSON.Value( Records.IdxField(i+1).Name ) = Records.IdxField(i+1).StringValue
+		      
+		    Next
+		    
+		    // Add the JSON record to the JSON records object.
+		    RecordsJSON.Append(RecordJSON)
+		    
+		    // Go to the next row.
+		    Records.MoveNext
+		    
+		  Wend
+		  
+		  // Close the recordset.
+		  If Close Then
+		    Records.Close
+		  End If
+		  
+		  Return RecordsJSON
+		  
+		  
+		End Function
+	#tag EndMethod
+
+	#tag Method, Flags = &h0
+		Function TextToString(T As Text) As String
+		  Dim CS As CString = T.ToCString(Xojo.Core.TextEncoding.UTF8)
+		  
+		  Dim StringValue As String = CS
+		  
+		  Return StringValue
+		End Function
+	#tag EndMethod
+
+	#tag Method, Flags = &h0
 		Function URLDecode(Encoded As String) As String
 		  // Properly and fully decodes a URL-encoded value.
 		  // Unlike Xojo's "DecodeURLComponent," this method decodes any "+" characters
@@ -811,30 +981,392 @@ Protected Module Backendd
 		End Function
 	#tag EndMethod
 
+	#tag Method, Flags = &h0
+		Function VersionString() As String
+		  Return "4.0.1"
+		End Function
+	#tag EndMethod
 
-	#tag Note, Name = About
+
+	#tag Note, Name = AloeExpress  4.0.1
+		-----------------------------------------------------------------------------------------
+		4.0.1
+		-----------------------------------------------------------------------------------------
 		
+		The Request.WSHandshake method has been modified to prevent crashing when no 
+		"Sec-WebSocket-Version" header is specified. If an HTTP/HTTPS request is made to
+		an endpoint whose purpose is to service WebSockets, and that request is not the initial
+		WebSocket handshake, then a 400 ("Bad Request") response is returned. Special thanks 
+		to Derk Jochems for reporting this issue.
 		
+		New Protocol and ProtocolVersion properties have been added to the Request class. 
+		These represent the application protocol (ex: http, https, etc) and version (ex: 1.1) 
+		that was used by the client to submit the request. Please note that when running behind
+		a proxy server, these values might not reflect the client's original upstream request.
 		
-		Read about the original AloeExpress:
-		
+	#tag EndNote
+
+	#tag Note, Name = AloeExpress  About
 		-----------------------------------------------------------------------------------------
 		About
 		-----------------------------------------------------------------------------------------
 		
-		Aloe Express is a powerful, easy-to-use, open source foundation on which you can 
-		build Web APIs, microservices, and more using Xojo. 
+		Aloe Express is a Xojo Web server module.
 		
-		To learn more about Aloe, visit: http://aloe.zone
+		To learn more, visit: http://aloe.zone
 		
 		
 	#tag EndNote
 
-	#tag Note, Name = License
+	#tag Note, Name = AloeExpress  Thanks
+		-----------------------------------------------------------------------------------------
+		Special thanks to...
+		-----------------------------------------------------------------------------------------
+		
+		Hal Gumbert of Camp Software (http://campsoftware.com), for his continued feedback, 
+		guidance, support, and friendship as Aloe Express has continued to evolve.
+		
+		Geoff Perlman of Xojo (https://www.xojo.com) for his early suggestions and feedback
+		regarding the Aloe Express concept. 
+		
+		Joshua Golub of Finite Wisdom (https://www.finitewisdom.com) for sharing
+		his insights regarding NodeJS, which have certainly influenced Aloe Express.
+		
+		Scott Boss of Nocturnal Coding Monkeys (http://nocturnalcodingmonkeys.com), for
+		providing valuable feedback and for working on the "loopback" support.
+		
+		Paul Lefebvre of Xojo (https://www.xojo.com) for reviewing Aloe Express from
+		a technical perspective, and for all that he does for the Xojo community.
+		
+		Kem Tekinay of MacTechnologies Consulting (http://mactechnologies.com) for
+		sharing his Xojo-WebSocket class (https://github.com/ktekinay/Xojo-WebSocket)
+		and for helping with the WebSocket testing.
+		
+		Derk Jochems for suggesting the Request.PathItems concept, which makes it much
+		easier to route and process reqeusts.
 		
 		
-		Based and derived from the following license:
+	#tag EndNote
+
+	#tag Note, Name = AloeExpress 1.0.0
+		-----------------------------------------------------------------------------------------
+		1.0.0
+		-----------------------------------------------------------------------------------------
 		
+		Initial public production release.
+		
+	#tag EndNote
+
+	#tag Note, Name = AloeExpress 1.1.0
+		-----------------------------------------------------------------------------------------
+		1.1.0
+		-----------------------------------------------------------------------------------------
+		
+		Added support for the ServerThread class, which makes it possible to run multiple 
+		Backendd.Server instances in a single application process. 
+		
+		Added support for HelperApp class, which makes it easier to use helper apps.
+	#tag EndNote
+
+	#tag Note, Name = AloeExpress 1.2.0
+		-----------------------------------------------------------------------------------------
+		1.2.0
+		-----------------------------------------------------------------------------------------
+		
+		Added support for the Template class, which is based loosely on mustache. For more 
+		information on mustache, visit: http://mustache.github.io
+		
+		Also includes changes to the demo app:
+		• The name has been changed to "Aloe-Express-Demo."
+		• The HelperApp demo module has been removed. (The class itself is still supported.)
+		• The HelperApp Xojo project file has been removed from the AE distribution package.
+		• See AloeExpress v1.1 for the HelperApp demo and project file.
+	#tag EndNote
+
+	#tag Note, Name = AloeExpress 2.0.0
+		-----------------------------------------------------------------------------------------
+		2.0.0
+		-----------------------------------------------------------------------------------------
+		
+		The Server class includes minor changes that make it possible to use AE in a Xojo 
+		desktop app.
+		
+		The Server's Constructor method has changed slightly so that default ServerSocket
+		properties are set. The default Port is 8080, MaximumSocketsConnected default is 200
+		and MinimumSocketsAvailable default is 50. Command line arguments are still supported.
+		
+		The MajorVersion, MinorVersion, and BugVersion constants have been removed. Use
+		the new VersionString method as a replacement.
+		
+		The Response.MetaRedirect method has been renamed to MetaRefresh.
+		
+		The Response.CookieSet method now uses "/" as its default path. Special thanks to 
+		Hal Gumbert for suggesting this.
+		
+		Resolves long-standing issues in SessionEngine and CacheEngine, where their
+		"sweep" methods would throw an exception when expired entries were deleted.
+		
+		Several new "helper methods" have been added to the module. Most are intended to make
+		converting between data types a little easier.
+		
+	#tag EndNote
+
+	#tag Note, Name = AloeExpress 3.0.0
+		-----------------------------------------------------------------------------------------
+		3.0.0
+		-----------------------------------------------------------------------------------------
+		
+		New features:
+		• Support for persistent connections ("Keep-Alives").
+		• Support for multipart forms.
+		• Support for large entity bodies.
+		• Support for ETags.
+		
+		Key changes:
+		• Improvements to the FileRead method.
+		• The Template class has been moved to its own module.
+		
+		Details:
+		
+		Removed all references to the "new framework." This includes uses of Xojo.Core.Date,
+		Xojo.Core.DateInterval, etc.
+		
+		Persistent connections (also known as "Keep-Alives") are now supported and enabled by
+		default. Two new Server properties can be used to configure persistent connections.
+		Server.KeepAlive, a boolean (True by default) can be used to enable or disable
+		persistent connections. When KeepAlives are enabled, the Server.KeepAliveTimeout 
+		property, an integer (set to 30 by default), can be used to specify the amount of time 
+		that a connection can be idle before it is considered to have timed out.
+		
+		A new ConnectionSweeper class (a Timer subclass) handles the "sweep" process that
+		is mentioned above. An instance of this class is automatically created when a server
+		instance runs. The interval with which the sweep occurs is controlled by the server's
+		ConnSweepIntervalSecs property. Its default is 15 seconds.
+		
+		The Request class now properly handles large HTTP requests. In cases where a 
+		payload's length requires that that a socket wait until all data has been received,
+		the DataAvailable event handler will wait until all data has been received in the
+		buffer before reading the data and processing the request.
+		
+		Support for multipart forms has been added. In cases where a form has been submitted
+		which included "file" input fields, information about the fields will be provided in a 
+		new Request.Files dictionary. The dictionary's keys will be the field names. The
+		values will also be dictionaries, and will include key/value pairs for the filename,
+		content type, content length, etc.
+		
+		The Server class now supports a MaxEntitySize property, which can be used to limit 
+		the size of a request body. This is particularly helpful when you want to limit the size 
+		of file uploads. By default, this is set to 10Mb (10485760 bits).
+		
+		The Template class, which was previously included in the AloeExpress core module, has
+		been moved to its own Templates module, and the class has been renamed 
+		to MustacheLite. 
+		
+		The new DemoTemplateClientSide module has been added to demonstrate the use of 
+		client-side templating solutions. In this demo, a Mustache logic-less template is used. 
+		The module also demonstrates the use of XMLHttpRequestto make XML calls to the 
+		app for data, which is then merged with the page.
+		
+		The Logger class now automatically takes into account any "X-Forwarded-For" headers,
+		which are used when apps are being proxied.
+		
+		CacheEngine and SessionEngine are now subclasses of the Timer class. Expiration logic
+		in both classes has been modified to reflect the move away from Xojo.Core.Dates.
+		
+		The FileRead method now takes an optional TextEncoding parameter. The default is UTF8.
+		
+		When running in the debugger, additional headers are added to the response. These 
+		include X-Aloe-Version, X-Host, X-Last-Connect, X-Socket-ID, and X-Xojo-Version. For 
+		security reasons, you should not return these headers in production environments.
+		
+		ETag support has been added via the Request.MapToFile method, which provides
+		web cache validation. By default, ETags are used when serving static resources via 
+		the method. You can disable this feature by calling the method and passing
+		False as the "UseEtags" parameter.
+		
+		The Request class now has a Server property, which is automatically set to 
+		the Backendd.Server instances that it is associated with. 
+		
+		Similarly, the Response class now has a Request property, which is automatically 
+		set to the Backendd.Request instance that it is associated with.
+		
+	#tag EndNote
+
+	#tag Note, Name = AloeExpress 3.1.0
+		-----------------------------------------------------------------------------------------
+		3.1.0
+		-----------------------------------------------------------------------------------------
+		
+		Reduces the memory needed to process multipart forms, and frees up memory as
+		quickly as possible. Connections involving multipart forms are now closed after 
+		processing.
+		
+	#tag EndNote
+
+	#tag Note, Name = AloeExpress 3.2.0
+		-----------------------------------------------------------------------------------------
+		3.2.0
+		-----------------------------------------------------------------------------------------
+		
+		Seamlessly adds support for XojoScript. Blocks of XojoScript code (wrapped in 
+		"<xojoscript>" and "</xojoscript>" tags) will be run, and their output (via Print
+		commands in the scripts) will be substituted in the rendered code. The feature can
+		be disabled by setting the Request.XojoScriptEnabled property to False. A new demo, 
+		DemoXojoScript, has been added to the AE project to demonstrate this functionality.
+		Refer to the HTML file in the demo's associated htdocs folder for example XojoScript.
+		
+		The XSProcessor class has been added to the module to add XojoScript support.
+		Special thanks to Paul Lefebvre and the Xojo team for the XojoScript example project,
+		which this class is based on.
+		
+		Adds support for two new Server parameters: Name and SilentStart. Name
+		(which defaults to "Aloe Express Server") can be used to display an alternate name 
+		when the server launches. SilentStart (which defaults to False) can be used to suppress 
+		the display of the server info when the server launches. Both params are used in 
+		the Server.ServerInfoDisplay method.
+		
+		A minor bug was fixed in the BlockReplace method. The method now honors the Start
+		parameter. Previously, the method had zero hardcoded in the call to BlockGet.
+		
+		
+	#tag EndNote
+
+	#tag Note, Name = AloeExpress 4.0.0
+		-----------------------------------------------------------------------------------------
+		4.0.0
+		-----------------------------------------------------------------------------------------
+		
+		This release adds support for the WebSocket Protocol, enabling two-way communication 
+		between clients and an Aloe Express-based server. This implementation is based on 
+		RFC 6455 ( https://tools.ietf.org/html/rfc6455 ).
+		
+		For a demonstration of Aloe Express's WebSocket support, see the new
+		DemoWebSockets demo module.
+		
+		Aloe Express's WebSocket support is designed to be seamless. To add WebSocket 
+		support to an app, simply have the client open a WebSocket connection and 
+		reference an endpoint. In your app, route WebSocket-related requests just as you 
+		would HTTP requests, evaluate them, and process them.
+		 
+		For security, you might want to evaluate the Origin header before handshaking and
+		continuing with a WebSocket connect request. You should respond with a 
+		"403 Forbidden" status if the request is being denied.
+		
+		To handshake with a client, simply call Request.WSHandshake. From that point on, 
+		messages received on the WebSocket that will continue to be routed to the original 
+		endpoint. Aloe will automatically manage and decode an incoming message.
+		It will fully compose and decode an incoming message, store it in the Request's 
+		Body property, and pass it to the app's RequestHandler method.
+		
+		To respond to a message, or to send a message to the client for any reason, use
+		the Request.WSMessageSend method. All frame encoding and message 
+		composition is handled by the method. See below for known limitations.
+		
+		WebSocket-related changes:
+		• A WSStatus property has been added to the Request class. Default is Inactive.
+		• The Request class has new WebSocket-related methods: WSHandShake,
+		WSMessageGet, and WSMessageSend.
+		• The Request.Reset method no longer resets the path, which makes it possible
+		to route an inbound WebSocket message after the initial handshake.
+		• The Request.DataAvailable event handler automatically handles WebSocket 
+		messages after the handshake. See the Request.WSMessageGet method for the 
+		frame decoding logic that is being used.
+		• The Request class now has a Close method which cleans up custom properties
+		before calling Super.Close. This is intended to prevent WebSocket connections 
+		and persistent connections from inadvertently maintaining state as sockets are
+		recycled.
+		• Server.WebSockets, an array of Backendd.Request instances, has been
+		added to support bulk WebSocket-related functions such as message 
+		broadcasting and "who"-like functionality (as seen in the new demo).
+		• A new WSMessageBroadcast method has been added to the Server class.
+		It can be used to send a message to all active WebSockets.
+		• The Server class has a new WSTimeout property, which can be used to specify
+		the number of seconds of inactivity that can pass before a WebSocket will
+		be considered to have timed out. The default is 1800 seconds (30 minutes).
+		You can set the value to zero to disable WebSocket timeouts.
+		• The ConnectionSweeper class has been modified so that two sweeps are done.
+		The HTTPConnSweep method sweeps expired HTTP connections. Similarly, 
+		the WSConnSweep method sweeps expired WebSocket connections (based 
+		on the Server.WSTimeout property mentioned above).
+		
+		Known WebSocket-related limitations and issues:
+		• Request.WSMessageSend only supports text frames (Opcode 1). For details, 
+		refer to RFC 6455 Section 11.8 ("WebSocket Opcode Registry"). Binary frames 
+		(Opcode 2) might be supported in a future version. Similarly, pings (Opcode 9)
+		 and pongs (Opcode 10) are not supported in this release.
+		
+		Session management-related changes:
+		• This release includes a number of changes that are designed to make
+		session management more seamless. The changes listed below are
+		illustrated in the updated DemoSessions module.
+		• The Server class now includes a SessionEngine property which is an
+		Backendd.SessionEngine type.
+		• The Server class also now includes a SessionsEnabled property which 
+		is a Boolean that defaults to False.
+		• If the server is started with the SessionsEnabled property set to True,
+		then the server's SessionEngine will be set to an instance of 
+		Backendd.SessionEngine. 
+		• The Server class includes a new SessionsSweepIntervalSecs property,
+		which is an Integer with a default value of 300. This property is used
+		to determine the frequency with which expired sessions are removed.
+		• The Request class now includes a Session property, which is a dictionary.
+		• To obtain or restore a session for a given session, simply call the 
+		class's new SessionGet method. You can optionally pass a AssignNewID 
+		Boolean parameter to indicate whether a new Session ID should be 
+		assigned to the session. By default, this is set to True to prevent session
+		fixation attacks. In some cases, such as when processing XHRs 
+		(XMLHttpRequests), you might want to obtain a session without 
+		generating a new Session ID.
+		• To terminate a request's session, simply call the class's new
+		SessionTerminate method.
+		
+		Cache management-related changes:
+		• This release also includes a number of changes that are designed to make
+		Server-level caching more seamless. The changes listed below are
+		illustrated in the updated DemoCaching module.
+		• The Server class now includes a CachEngine property which is an
+		Backendd.CacheEngine type.
+		• The Server class also now includes a CachingEnabled property which 
+		is a Boolean that defaults to False.
+		• If the server is started with the CachingEnabled property set to True,
+		then the server's CacheEngine will be set to an instance of 
+		Backendd.CacheEngine. 
+		• The Server class includes a new CacheSweepIntervalSecs property,
+		which is an Integer with a default value of 300. This property is used
+		to determine the frequency with which expired cache entries are removed.
+		
+		Miscellaneous changes:
+		• The Request.URLParamsGet method has been modified to take into account the
+		possibility that a URL parameter might have an unescaped question mark in it.
+		• The Server class includes a new dictionary property named "Custom."
+		The dictionary will persist between requests, and is scoped in such a way 
+		that it acts very much like an App-level property.
+		• The Request class also has a new property named "Custom." It's a dictionary 
+		that can be used to store application-specific information for a request, which
+		persists between requests when the socket is being held open (for example,
+		when it is servicing a WebSocket connection). For an example of how it can
+		be used, see the WebSocket demo. Note that the dictionary is initialized
+		in the Request.Prepare method.
+		• The Request class has a new PathItems property. This is a dictionary that 
+		makes it easier to evaluate a request's path for routing and processing.
+		
+		
+		
+		
+	#tag EndNote
+
+	#tag Note, Name = AloeExpress Developer
+		-----------------------------------------------------------------------------------------
+		Developer
+		-----------------------------------------------------------------------------------------
+		
+		Tim Dietrich
+		• Email: timdietrich@me.com
+		• Web: http://timdietrich.me
+		
+	#tag EndNote
+
+	#tag Note, Name = AloeExpress License
 		-----------------------------------------------------------------------------------------
 		The MIT License (MIT)
 		-----------------------------------------------------------------------------------------
@@ -859,48 +1391,16 @@ Protected Module Backendd
 		SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 		
 		To learn more, visit https://www.tldrlegal.com/l/mit.
-		
-		
 	#tag EndNote
-
-	#tag Note, Name = Thanks
-		
-		
-		Based on AloeExpress Thanks to:
-		
-		-----------------------------------------------------------------------------------------
-		Special thanks to...
-		-----------------------------------------------------------------------------------------
-		
-		Hal Gumbert of Camp Software (http://campsoftware.com), for his feedback and 
-		guidance as Aloe Express took shape.
-		
-		Geoff Perlman of Xojo (https://www.xojo.com) for his suggestions and feedback
-		regarding the Aloe Express concept. 
-		
-		Joshua Golub of Finite Wisdom (https://www.finitewisdom.com) for his sharing
-		his insights regarding NodeJS.
-		
-		Scott Boss of Nocturnal Coding Monkeys (http://nocturnalcodingmonkeys.com), for
-		providing valuable feedback and working on the "loopback" support.
-		
-		Paul Lefebvre of Xojo (https://www.xojo.com) for reviewing Aloe Express from
-		a technical perspective.
-		
-	#tag EndNote
-
-
-	#tag Constant, Name = BugVersion, Type = Double, Dynamic = False, Default = \"0", Scope = Public
-	#tag EndConstant
-
-	#tag Constant, Name = MajorVersion, Type = Double, Dynamic = False, Default = \"1", Scope = Public
-	#tag EndConstant
-
-	#tag Constant, Name = MinorVersion, Type = Double, Dynamic = False, Default = \"2", Scope = Public
-	#tag EndConstant
 
 
 	#tag ViewBehavior
+		#tag ViewProperty
+			Name="Name"
+			Visible=true
+			Group="ID"
+			Type="String"
+		#tag EndViewProperty
 		#tag ViewProperty
 			Name="Index"
 			Visible=true
@@ -909,23 +1409,17 @@ Protected Module Backendd
 			Type="Integer"
 		#tag EndViewProperty
 		#tag ViewProperty
+			Name="Super"
+			Visible=true
+			Group="ID"
+			Type="String"
+		#tag EndViewProperty
+		#tag ViewProperty
 			Name="Left"
 			Visible=true
 			Group="Position"
 			InitialValue="0"
 			Type="Integer"
-		#tag EndViewProperty
-		#tag ViewProperty
-			Name="Name"
-			Visible=true
-			Group="ID"
-			Type="String"
-		#tag EndViewProperty
-		#tag ViewProperty
-			Name="Super"
-			Visible=true
-			Group="ID"
-			Type="String"
 		#tag EndViewProperty
 		#tag ViewProperty
 			Name="Top"
