@@ -1,4 +1,4 @@
-# Backendd
+# Backendd (based on AloeExpress by Tim Dietrich)
 A web server made with Xojo, for use as a backend (backendd for daemon).
 
 - Originally based on AloeExpress made by Tim Dietrich
