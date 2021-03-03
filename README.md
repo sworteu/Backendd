@@ -1,5 +1,4 @@
-# Backendd is put into the fridge, please see: https://github.com/sworteu/Express
-# for a modern alternative (Xojo API 2.0 compilant, optimized webserver)
+# Backendd is put into the fridge, please see: https://github.com/sworteu/Express for a modern alternative (Xojo API 2.0 compilant, optimized webserver)
 
 # Backendd (based on AloeExpress by Tim Dietrich)
 A web server made with Xojo, for use as a backend (backendd for daemon).
